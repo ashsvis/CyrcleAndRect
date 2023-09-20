@@ -103,6 +103,18 @@ namespace CyrcleAndRect
                 fig.Offset(new PointF(e.Location.X - point.X, e.Location.Y - point.Y));
                 point = e.Location;
                 Invalidate();
+                using (var g = this.CreateGraphics())
+                {
+                    foreach (var item in figures.Where(item => item != fig))
+                    {
+                        if (fig.IntersectWith(item, g))
+                        {
+                            Text = "Пересекаются";
+                            return;
+                        }
+                    }
+                }
+                Text = "Прямоугольник и круг";
             }
         }
 
