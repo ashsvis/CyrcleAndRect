@@ -9,7 +9,6 @@ namespace CyrcleAndRect
         public Color ForeColor { get; set; } = Color.Black;
         public Color BackColor { get; set; } = Color.White;
         public abstract void DrawAt(Graphics g);
-        protected abstract GraphicsPath GetPath();
 
         public string Name { get; set; }
 
@@ -26,10 +25,18 @@ namespace CyrcleAndRect
             Location = PointF.Add(Location, new SizeF(point.X, point.Y));
         }
 
-        public bool IntersectWith(Figure figure, Graphics graphics)
+        protected abstract GraphicsPath GetPath();
+
+        /// <summary>
+        /// Проверка пересечения текущей фигуры относительно другой
+        /// </summary>
+        /// <param name="otherFigure"></param>
+        /// <param name="graphics"></param>
+        /// <returns></returns>
+        public bool IntersectWith(Figure otherFigure, Graphics graphics)
         {
             using (var path = GetPath())
-            using (var otherPath = figure.GetPath())
+            using (var otherPath = otherFigure.GetPath())
             {
                 using (var region = new Region(path))
                 {
