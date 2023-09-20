@@ -15,7 +15,11 @@ namespace CyrcleAndRect
         RectangleF rectangle;
         RectangleF cyrcle;
         List<Figure> figures = new List<Figure>();
-
+        
+        Cyrcle P1 = new Cyrcle() { Name = "P1", Diameter = 8, BackColor = Color.Black };
+        Cyrcle P2 = new Cyrcle() { Name = "P2", Diameter = 8, BackColor = Color.Black };
+        Cyrcle P3 = new Cyrcle() { Name = "P3", Diameter = 8, BackColor = Color.Black };
+        List<Figure> points = new List<Figure>();
 
         public MainForm()
         {
@@ -28,7 +32,18 @@ namespace CyrcleAndRect
             var rect = ClientRectangle;
             CreateRect(rect);
             CreateCyrcle(rect);
+            CreateBasePoints(rect);
             Invalidate();
+        }
+
+        private void CreateBasePoints(Rectangle rect)
+        {
+            rect.Inflate(-50, -50);
+            var rand = new Random();
+            P1.Location = new PointF(rand.Next(rect.Left, rect.Right), rand.Next(rect.Top, rect.Bottom));
+            P2.Location = new PointF(rand.Next(rect.Left, rect.Right), rand.Next(rect.Top, rect.Bottom));
+            P3.Location = new PointF(rand.Next(rect.Left, rect.Right), rand.Next(rect.Top, rect.Bottom));
+            points.AddRange(new[] { P1, P2, P3 });
         }
 
         private void CreateRect(RectangleF rect)
@@ -64,6 +79,9 @@ namespace CyrcleAndRect
         {
             var g = e.Graphics;
             figures.ForEach(fig => fig.DrawAt(g));
+
+            points.ForEach(fig => fig.DrawAt(g));
+            points.ForEach(fig => g.DrawString("P" + fig.Name, Font, Brushes.Black, fig.Location));
         }
 
         bool down;

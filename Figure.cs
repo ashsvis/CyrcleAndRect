@@ -11,6 +11,8 @@ namespace CyrcleAndRect
         public abstract void DrawAt(Graphics g);
         protected abstract GraphicsPath GetPath();
 
+        public string Name { get; set; }
+
         public bool Contains(PointF point)
         {
             using (var path = GetPath())
