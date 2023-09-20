@@ -14,12 +14,12 @@ namespace CyrcleAndRect
     {
         RectangleF rectangle;
         RectangleF cyrcle;
-        List<Figure> figures = new List<Figure>();
-        
-        Cyrcle P1 = new Cyrcle() { Name = "P1", Diameter = 8, BackColor = Color.Black };
-        Cyrcle P2 = new Cyrcle() { Name = "P2", Diameter = 8, BackColor = Color.Black };
-        Cyrcle P3 = new Cyrcle() { Name = "P3", Diameter = 8, BackColor = Color.Black };
-        List<Figure> points = new List<Figure>();
+        readonly List<Figure> figures = new List<Figure>();
+
+        readonly Cyrcle P1 = new Cyrcle() { Name = "P1", Diameter = 8, BackColor = Color.Black };
+        readonly Cyrcle P2 = new Cyrcle() { Name = "P2", Diameter = 8, BackColor = Color.Black };
+        readonly Cyrcle P3 = new Cyrcle() { Name = "P3", Diameter = 8, BackColor = Color.Black };
+        readonly List<Figure> points = new List<Figure>();
 
         public MainForm()
         {
@@ -32,17 +32,15 @@ namespace CyrcleAndRect
             var rect = ClientRectangle;
             CreateRect(rect);
             CreateCyrcle(rect);
-            CreateBasePoints(rect);
+            CreateBasePoints(rectangle, cyrcle);
             Invalidate();
         }
 
-        private void CreateBasePoints(Rectangle rect)
+        private void CreateBasePoints(RectangleF rectangle, RectangleF cyrcle)
         {
-            rect.Inflate(-50, -50);
-            var rand = new Random();
-            P1.Location = new PointF(rand.Next(rect.Left, rect.Right), rand.Next(rect.Top, rect.Bottom));
-            P2.Location = new PointF(rand.Next(rect.Left, rect.Right), rand.Next(rect.Top, rect.Bottom));
-            P3.Location = new PointF(rand.Next(rect.Left, rect.Right), rand.Next(rect.Top, rect.Bottom));
+            P1.Location = new PointF(rectangle.Left - P1.Diameter / 2f, rectangle.Bottom - P1.Diameter / 2f);
+            P2.Location = new PointF(rectangle.Right - P2.Diameter / 2f, rectangle.Top - P2.Diameter / 2f);
+            P3.Location = new PointF(cyrcle.Left + cyrcle.Width / 2f - P3.Diameter / 2f, cyrcle.Top + cyrcle.Height / 2f - P3.Diameter / 2f);
             points.AddRange(new[] { P1, P2, P3 });
         }
 
@@ -59,6 +57,23 @@ namespace CyrcleAndRect
                 BackColor = Color.FromArgb(180, Color.DodgerBlue),
             };
             figures.Add(rectFig);
+        }
+
+        private void UpdateRect()
+        {
+            var rectFig = (Rect)figures.FirstOrDefault(item => item is Rect);
+            if (rectFig == null) return;
+            rectFig.Location = new PointF(P1.Location.X + P1.Diameter / 2f, P2.Location.Y + P2.Diameter / 2f);
+            rectFig.Width = P2.Location.X - P1.Location.X;
+            rectFig.Height = P1.Location.Y - P2.Location.Y;
+        }
+
+        private void UpdateCyrcle()
+        {
+            var cyrcleFig = (Cyrcle)figures.FirstOrDefault(item => item is Cyrcle);
+            if (cyrcleFig == null) return;
+            cyrcleFig.Location = new PointF(P3.Location.X + P3.Diameter / 2f - cyrcleFig.Diameter / 2f, 
+                                            P3.Location.Y + P3.Diameter / 2f - cyrcleFig.Diameter / 2f);
         }
 
         private void CreateCyrcle(RectangleF rect)
@@ -81,7 +96,7 @@ namespace CyrcleAndRect
             figures.ForEach(fig => fig.DrawAt(g));
 
             points.ForEach(fig => fig.DrawAt(g));
-            points.ForEach(fig => g.DrawString("P" + fig.Name, Font, Brushes.Black, fig.Location));
+            points.ForEach(fig => g.DrawString($"P{fig.Name} {fig.Location}", Font, Brushes.Black, fig.Location));
         }
 
         bool down;
@@ -92,24 +107,14 @@ namespace CyrcleAndRect
         {
             if (e.Button == MouseButtons.Left)
             {
-                var list = new List<Figure>(figures);
-                list.Reverse();
-                foreach (var fig in list)
+                foreach (var pt in points)
                 {
-                    if (fig.Contains(e.Location))
+                    if (pt.Contains(e.Location))
                     {
-                        this.fig = fig;
+                        this.fig = pt;
                         point = e.Location;
                         down = true;
-                        break;
                     }
-                }
-                // "перемещение" выбранной фигуры, чтобы она была "сверху" стопки
-                if (down && fig != null)
-                {
-                    figures.Remove(fig);
-                    figures.Add(fig);
-                    Invalidate();
                 }
             }
         }
@@ -119,17 +124,18 @@ namespace CyrcleAndRect
             if (down && fig != null)
             {
                 fig.Offset(new PointF(e.Location.X - point.X, e.Location.Y - point.Y));
+                UpdateRect();
+                UpdateCyrcle();
                 point = e.Location;
                 Invalidate();
+                var rectFig = (Rect)figures.FirstOrDefault(item => item is Rect);
+                var cyrcleFig = (Cyrcle)figures.FirstOrDefault(item => item is Cyrcle);
                 using (var g = this.CreateGraphics())
                 {
-                    foreach (var item in figures.Where(item => item != fig))
+                    if (rectFig.IntersectWith(cyrcleFig, g))
                     {
-                        if (fig.IntersectWith(item, g))
-                        {
-                            Text = "Пересекаются";
-                            return;
-                        }
+                        Text = "Пересекаются";
+                        return;
                     }
                 }
                 Text = "Прямоугольник и круг";
